@@ -46,6 +46,30 @@
     line-height: 1;
   }
 
+  /* A Golden Snitch: a little gold ball with silver wings that flap */
+  .snitch svg { display: block; filter: drop-shadow(0 0 5px rgba(255, 216, 107, 0.85)); }
+  .bludger svg { display: block; filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.6)); }
+
+  .wing {
+    animation: flap 0.16s infinite alternate ease-in-out;
+  }
+
+  .wingLeft  { transform-origin: 14px 17px; }
+  .wingRight { transform-origin: 28px 17px; }
+
+  @keyframes flap {
+    from { transform: scaleY(1); }
+    to   { transform: scaleY(0.35); }
+  }
+
+  /* Bludgers are heavy iron balls, so they just spin */
+  .bludger svg { animation: spin 1.1s linear infinite; }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
   #player {
     bottom: 8px;
     font-size: 40px;
@@ -203,7 +227,7 @@
   <!-- The start / game over screen -->
   <div id="message" class="panel">
     <h2>Ready, Seeker?</h2>
-    <p>Catch the Snitches 🟡<br>Dodge the Bludgers ⚫</p>
+    <p id="legend">Catch the Snitches<br>Dodge the Bludgers</p>
     <p id="broomLabel"></p>
     <button id="startBtn">Start Game</button>
     <button id="shopBtn">🧹 Broom Shop</button>
@@ -270,6 +294,57 @@ const CHANCE_JACKPOT = 10;     // a big pile of coins
 // whatever is left over (55) is a small handful of coins
 
 // ----------------------------------------------------------
+
+// ---- The drawings ----
+// These are SVG pictures: little shapes described with numbers.
+// A Golden Snitch is a gold ball with two silver wings that flap.
+function snitchSVG(size) {
+  return '<svg width="' + size + '" height="' + (size * 0.72) + '" viewBox="0 0 42 30">' +
+    '<defs>' +
+      '<radialGradient id="gold" cx="35%" cy="30%">' +
+        '<stop offset="0%" stop-color="#fff6cf"/>' +
+        '<stop offset="55%" stop-color="#ffd247"/>' +
+        '<stop offset="100%" stop-color="#b8860b"/>' +
+      '</radialGradient>' +
+      '<linearGradient id="silver" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>' +
+        '<stop offset="100%" stop-color="#c8d4e8" stop-opacity="0.55"/>' +
+      '</linearGradient>' +
+    '</defs>' +
+    // left wing, then right wing (they flap up and down)
+    '<g class="wing wingLeft">' +
+      '<path d="M14 17 C9 6, 3 3, 1 7 C-0.5 12, 6 17, 14 18 Z" fill="url(#silver)" stroke="#e6eefb" stroke-width="0.5"/>' +
+      '<path d="M13 17 C9 12, 6 9, 3 7" fill="none" stroke="#b9c7de" stroke-width="0.4" opacity="0.8"/>' +
+      '<path d="M13 17.6 C10 14, 7 12, 4 10.5" fill="none" stroke="#b9c7de" stroke-width="0.35" opacity="0.6"/>' +
+    '</g>' +
+    '<g class="wing wingRight">' +
+      '<path d="M28 17 C33 6, 39 3, 41 7 C42.5 12, 36 17, 28 18 Z" fill="url(#silver)" stroke="#e6eefb" stroke-width="0.5"/>' +
+      '<path d="M29 17 C33 12, 36 9, 39 7" fill="none" stroke="#b9c7de" stroke-width="0.4" opacity="0.8"/>' +
+      '<path d="M29 17.6 C32 14, 35 12, 38 10.5" fill="none" stroke="#b9c7de" stroke-width="0.35" opacity="0.6"/>' +
+    '</g>' +
+    // the golden ball, with a shiny spot and a band around it
+    '<circle cx="21" cy="19" r="8.5" fill="url(#gold)" stroke="#8a6508" stroke-width="0.7"/>' +
+    '<path d="M12.8 17 Q21 22.5, 29.2 17" fill="none" stroke="#8a6508" stroke-width="0.8" opacity="0.75"/>' +
+    '<circle cx="17.8" cy="15.8" r="2.2" fill="#fffbe8" opacity="0.9"/>' +
+  '</svg>';
+}
+
+// A Bludger is a heavy black iron ball with rivets.
+function bludgerSVG(size) {
+  return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 30 30">' +
+    '<defs>' +
+      '<radialGradient id="iron" cx="35%" cy="30%">' +
+        '<stop offset="0%" stop-color="#7d8590"/>' +
+        '<stop offset="60%" stop-color="#3a3f47"/>' +
+        '<stop offset="100%" stop-color="#14161a"/>' +
+      '</radialGradient>' +
+    '</defs>' +
+    '<circle cx="15" cy="15" r="13" fill="url(#iron)" stroke="#0a0b0d" stroke-width="1"/>' +
+    '<circle cx="10" cy="9" r="1.5" fill="#9aa3ad" opacity="0.8"/>' +
+    '<circle cx="21" cy="12" r="1.2" fill="#6b737d" opacity="0.7"/>' +
+    '<circle cx="16" cy="21" r="1.3" fill="#6b737d" opacity="0.7"/>' +
+  '</svg>';
+}
 
 const game = document.getElementById("game");
 const player = document.getElementById("player");
@@ -556,12 +631,28 @@ function updateScoreboard() {
 function spawnThing() {
   const isBludger = Math.random() < bludgerChanceNow();
   const el = document.createElement("div");
-  el.className = "thing";
-  el.textContent = isBludger ? "⚫" : "🟡";
-  el.style.left = Math.random() * (game.clientWidth - 40) + "px";
+  el.className = "thing " + (isBludger ? "bludger" : "snitch");
+  el.dataset.kind = isBludger ? "bludger" : "snitch";
+  el.innerHTML = isBludger ? bludgerSVG(30) : snitchSVG(42);
+
+  const baseX = Math.random() * (game.clientWidth - 40);
+  el.style.left = baseX + "px";
   el.style.top = "-40px";
   game.appendChild(el);
-  fallingThings.push({ el, y: -40, isBludger });
+
+  fallingThings.push({
+    el: el,
+    y: -40,
+    isBludger: isBludger,
+    baseX: baseX,
+    age: 0,
+    // Snitches dart from side to side. Bludgers are heavy and drop straight.
+    swayAmount: isBludger ? 0 : randomInt(15, 45),
+    swaySpeed: isBludger ? 0 : (randomInt(3, 9) / 100),
+    swayStart: Math.random() * 6.28,
+    // Snitches flutter, so they don't all fall at exactly the same speed
+    speedFactor: isBludger ? 1 : (randomInt(80, 115) / 100)
+  });
 }
 
 function gameLoop() {
@@ -583,10 +674,17 @@ function gameLoop() {
 
   for (let i = fallingThings.length - 1; i >= 0; i--) {
     const thing = fallingThings[i];
-    thing.y += fallSpeedNow();
+    thing.age++;
+    thing.y += fallSpeedNow() * thing.speedFactor;
     thing.el.style.top = thing.y + "px";
 
-    const thingX = parseFloat(thing.el.style.left);
+    // Snitches weave left and right as they fall, like they're flying
+    let thingX = thing.baseX;
+    if (thing.swayAmount > 0) {
+      thingX += Math.sin(thing.age * thing.swaySpeed + thing.swayStart) * thing.swayAmount;
+      thingX = Math.min(Math.max(0, thingX), game.clientWidth - 40);
+      thing.el.style.left = thingX + "px";
+    }
     const hitPlayer = thing.y > game.clientHeight - 60 &&
                       thing.y < game.clientHeight - 5 &&
                       thingX > playerX - 35 &&
@@ -682,6 +780,11 @@ resetBtn.addEventListener("click", () => {
   updateScoreboard();
   updateBroom();
 });
+
+// Put a real little Snitch and Bludger on the start screen
+document.getElementById("legend").innerHTML =
+  '<span style="display:inline-flex;align-items:center;gap:6px">Catch the Snitches ' + snitchSVG(34) + '</span><br>' +
+  '<span style="display:inline-flex;align-items:center;gap:6px">Dodge the Bludgers ' + bludgerSVG(22) + '</span>';
 
 updateBroom();
 updateScoreboard();

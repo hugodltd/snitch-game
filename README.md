@@ -2,8 +2,12 @@
 
 My first game! Made by Hugo.
 
-You fly a broom, catch the Golden Snitches 🟡 for points,
-and dodge the Bludgers ⚫. You get 3 lives.
+You fly a broom, catch the Golden Snitches for points,
+and dodge the Bludgers. You get 3 lives.
+
+The Snitches are proper little golden balls with silver wings that flap,
+and they weave from side to side as they fly, so they are tricky to catch.
+Bludgers are heavy iron balls, so they just spin and drop straight down.
 
 ## How to play
 
