@@ -87,6 +87,9 @@ Want to change it? Near the top of the `<script>` part there are three
 settings you can play with:
 
 ```js
+const SNITCH_WEAVE = 26;        // how far Snitches wander sideways (smaller = easier)
+const CATCH_HELP = 20;          // extra reach when catching a Snitch (bigger = easier)
+const DODGE_HELP = 8;           // Bludgers must be this much closer to hurt you
 const FALL_SPEED = 2.5;         // how fast things fall on level 1
 const SPAWN_EVERY = 55;         // frames between new things (smaller = harder)
 const BLUDGER_CHANCE = 0.3;     // 0.3 means 30% of things are Bludgers

@@ -255,6 +255,12 @@ const FALL_SPEED = 2.5;      // how fast things fall on level 1
 const SPAWN_EVERY = 55;      // frames between new things (smaller = harder)
 const BLUDGER_CHANCE = 0.3;  // 0.3 means 30% of things are Bludgers
 
+// How hard it is to catch things. Change these to make the game easier!
+const SNITCH_WEAVE = 26;     // how far Snitches wander sideways (smaller = easier)
+const SNITCH_WOBBLE = 6;     // how fast they wiggle (smaller = easier)
+const CATCH_HELP = 20;       // extra reach when catching a Snitch (bigger = easier)
+const DODGE_HELP = 8;        // Bludgers must be this much closer to hurt you
+
 // Levels! Every level makes the game a bit harder.
 const SNITCHES_PER_LEVEL = 8;      // catch this many Snitches to level up
 const SPEED_PER_LEVEL = 0.55;      // things fall this much faster each level
@@ -647,8 +653,8 @@ function spawnThing() {
     baseX: baseX,
     age: 0,
     // Snitches dart from side to side. Bludgers are heavy and drop straight.
-    swayAmount: isBludger ? 0 : randomInt(15, 45),
-    swaySpeed: isBludger ? 0 : (randomInt(3, 9) / 100),
+    swayAmount: isBludger ? 0 : randomInt(8, SNITCH_WEAVE),
+    swaySpeed: isBludger ? 0 : (randomInt(2, SNITCH_WOBBLE) / 100),
     swayStart: Math.random() * 6.28,
     // Snitches flutter, so they don't all fall at exactly the same speed
     speedFactor: isBludger ? 1 : (randomInt(80, 115) / 100)
@@ -685,10 +691,14 @@ function gameLoop() {
       thingX = Math.min(Math.max(0, thingX), game.clientWidth - 40);
       thing.el.style.left = thingX + "px";
     }
+    // Snitches are easier to catch than Bludgers are to bump into.
+    // Your broom "reaches" further for a Snitch, and Bludgers have to
+    // get closer before they hurt you.
+    const reach = thing.isBludger ? -DODGE_HELP : CATCH_HELP;
     const hitPlayer = thing.y > game.clientHeight - 60 &&
                       thing.y < game.clientHeight - 5 &&
-                      thingX > playerX - 35 &&
-                      thingX < playerX + 40;
+                      thingX > playerX - 35 - reach &&
+                      thingX < playerX + 40 + reach;
 
     if (hitPlayer) {
       if (thing.isBludger) {
