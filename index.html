@@ -463,6 +463,12 @@ function drawShop() {
   shopList.innerHTML = "";
   document.getElementById("reveal").textContent = lastReveal;
 
+  // Packs go FIRST, so you can see them without scrolling
+  drawMysteryRow();
+
+  // Only offer the big pack while there are still legendary brooms to get
+  if (BROOMS.some(b => b.legendary && !owned.includes(b.id))) drawPackRow();
+
   BROOMS.forEach(broom => {
     // Legendary brooms stay hidden inside the pack until you open it
     if (broom.legendary && !packOwned) return;
@@ -513,11 +519,6 @@ function drawShop() {
     shopList.appendChild(row);
   });
 
-  drawMysteryRow();
-
-  // Only offer the big pack while there are still legendary brooms to get
-  const legendaryLeft = BROOMS.some(b => b.legendary && !owned.includes(b.id));
-  if (legendaryLeft) drawPackRow();
 }
 
 function updateBroom() {
