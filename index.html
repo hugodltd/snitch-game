@@ -130,6 +130,26 @@
     text-align: center;
   }
 
+  /* The cheap Mystery Pack you can open again and again */
+  .mysteryRow {
+    background: linear-gradient(90deg, #2c4a7a, #2c7a6a);
+    border: 2px dashed #7fe3d0;
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+
+  .mysteryTitle { color: #7fe3d0; font-size: 17px; }
+  .odds { font-size: 11px; opacity: 0.8; margin-top: 6px; line-height: 1.5; }
+
+  #reveal {
+    font-size: 16px;
+    color: #ffd86b;
+    min-height: 22px;
+    margin-bottom: 4px;
+  }
+
   .packTitle { color: #ff9ed8; font-size: 17px; }
   .packDesc { font-size: 12px; opacity: 0.9; margin: 4px 0 6px; }
 
@@ -194,6 +214,7 @@
     <h2>🧹 Broom Shop</h2>
     <div>You have <span id="shopCoins">0</span> 🪙</div>
     <div id="packOpened">✨ LEGENDARY PACK OPENED! ✨</div>
+    <div id="reveal"></div>
     <div id="shopList"></div>
     <button id="closeShop">Back</button>
     <button id="reset" class="small">Reset my progress</button>
@@ -240,6 +261,13 @@ const BROOMS = [
 ];
 
 const PACK_PRICE = 200;      // what the Legendary Pack costs
+const MYSTERY_PRICE = 10;    // what one Mystery Pack costs
+
+// What's inside a Mystery Pack. The numbers are the chances out of 100.
+const CHANCE_LEGENDARY = 5;    // a legendary broom!
+const CHANCE_BROOM = 30;       // a normal broom you don't own yet
+const CHANCE_JACKPOT = 10;     // a big pile of coins
+// whatever is left over (55) is a small handful of coins
 
 // ----------------------------------------------------------
 
@@ -306,6 +334,8 @@ let coins = load("snitch_coins", 0);
 let owned = load("snitch_owned", ["star"]);
 let equippedId = load("snitch_equipped", "star");
 let packOwned = load("snitch_pack", false);   // have you bought the Legendary Pack?
+let packsOpened = load("snitch_packs_opened", 0);
+let lastReveal = "";                          // what your last Mystery Pack gave you
 
 function equippedBroom() {
   return BROOMS.find(b => b.id === equippedId) || BROOMS[0];
@@ -316,6 +346,74 @@ function openShop() {
   shop.style.display = "flex";
   message.style.display = "none";
   drawShop();
+}
+
+// Pick a whole number between min and max (both included)
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+// The cheap pack you can open as many times as you like
+function drawMysteryRow() {
+  const row = document.createElement("div");
+  row.className = "mysteryRow";
+
+  const title = document.createElement("div");
+  title.className = "mysteryTitle";
+  title.textContent = "🎁 Mystery Pack";
+
+  const btn = document.createElement("button");
+  btn.className = "small";
+  btn.textContent = "Open for " + MYSTERY_PRICE + " 🪙";
+  btn.disabled = coins < MYSTERY_PRICE;
+  btn.onclick = openMystery;
+
+  const odds = document.createElement("div");
+  odds.className = "odds";
+  odds.innerHTML =
+    "What's inside?<br>" +
+    CHANCE_LEGENDARY + "% a LEGENDARY broom ⭐ &nbsp;·&nbsp; " +
+    CHANCE_BROOM + "% a new broom 🧹<br>" +
+    CHANCE_JACKPOT + "% a coin jackpot 💰 &nbsp;·&nbsp; " +
+    (100 - CHANCE_LEGENDARY - CHANCE_BROOM - CHANCE_JACKPOT) + "% a few coins 🪙<br>" +
+    "You have opened <b>" + packsOpened + "</b> packs.";
+
+  row.append(title, btn, odds);
+  shopList.appendChild(row);
+}
+
+function openMystery() {
+  if (coins < MYSTERY_PRICE) return;
+  coins -= MYSTERY_PRICE;
+  packsOpened++;
+
+  const newNormal = BROOMS.filter(b => !b.legendary && !owned.includes(b.id));
+  const newLegend = BROOMS.filter(b => b.legendary && !owned.includes(b.id));
+  const roll = randomInt(1, 100);
+
+  if (roll <= CHANCE_LEGENDARY && newLegend.length > 0) {
+    const won = newLegend[randomInt(0, newLegend.length - 1)];
+    owned.push(won.id);
+    lastReveal = "⭐ LEGENDARY! You got the " + won.name + "! ⭐";
+  } else if (roll <= CHANCE_LEGENDARY + CHANCE_BROOM && newNormal.length > 0) {
+    const won = newNormal[randomInt(0, newNormal.length - 1)];
+    owned.push(won.id);
+    lastReveal = "🧹 You got the " + won.name + "!";
+  } else if (roll > 100 - CHANCE_JACKPOT) {
+    const amount = randomInt(20, 40);
+    coins += amount;
+    lastReveal = "💰 JACKPOT! " + amount + " coins!";
+  } else {
+    const amount = randomInt(2, 12);
+    coins += amount;
+    lastReveal = "🪙 You found " + amount + " coins.";
+  }
+
+  save("snitch_coins", coins);
+  save("snitch_owned", owned);
+  save("snitch_packs_opened", packsOpened);
+  drawShop();
+  updateScoreboard();
 }
 
 // The locked pack, shown instead of the legendary brooms until you buy it
@@ -363,6 +461,7 @@ function openPack() {
 function drawShop() {
   shopCoins.textContent = coins;
   shopList.innerHTML = "";
+  document.getElementById("reveal").textContent = lastReveal;
 
   BROOMS.forEach(broom => {
     // Legendary brooms stay hidden inside the pack until you open it
@@ -414,7 +513,11 @@ function drawShop() {
     shopList.appendChild(row);
   });
 
-  if (!packOwned) drawPackRow();
+  drawMysteryRow();
+
+  // Only offer the big pack while there are still legendary brooms to get
+  const legendaryLeft = BROOMS.some(b => b.legendary && !owned.includes(b.id));
+  if (legendaryLeft) drawPackRow();
 }
 
 function updateBroom() {
@@ -566,10 +669,13 @@ resetBtn.addEventListener("click", () => {
   owned = ["star"];
   equippedId = "star";
   packOwned = false;
+  packsOpened = 0;
+  lastReveal = "";
   save("snitch_coins", coins);
   save("snitch_owned", owned);
   save("snitch_equipped", equippedId);
   save("snitch_pack", packOwned);
+  save("snitch_packs_opened", packsOpened);
   document.getElementById("packOpened").style.display = "none";
   drawShop();
   updateScoreboard();

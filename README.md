@@ -47,6 +47,26 @@ the Firebolt Supreme:
 
 You can only buy the pack once, and it unlocks all three at the same time.
 
+## Mystery Packs 🎁
+
+Only **10 coins**, and you can open as many as you like. Every pack is a
+gamble, and the shop always shows you the real chances:
+
+| What you might get | Chance |
+|---|---|
+| ⭐ A legendary broom | 5% |
+| 🧹 A new broom you don't own | 30% |
+| 💰 A coin jackpot (20-40) | 10% |
+| 🪙 A few coins (2-12) | 55% |
+
+On average a pack gives back a bit less than the 10 coins it costs, so you
+can't get rich just by opening packs — you have to actually play. But you
+*can* get lucky.
+
+Opening Mystery Packs is a slower way to collect legendary brooms than
+buying the Legendary Pack: on average it takes about 20 packs (200 coins)
+to win just one, and the big pack gives you all three.
+
 ## High score to beat 🏆
 
 **Level 20**, by Hugo.
