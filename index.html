@@ -113,6 +113,33 @@
 
   .broomRow.equipped { border-color: #ffd86b; }
 
+  /* The locked Legendary Pack, and the legendary brooms inside it */
+  .broomRow.legendary {
+    background: linear-gradient(90deg, rgba(122, 44, 90, 0.75), rgba(74, 44, 122, 0.75));
+    border-color: #ff9ed8;
+  }
+
+  .broomRow.legendary.equipped { border-color: #ffd86b; }
+
+  .packRow {
+    background: linear-gradient(90deg, #5a2c7a, #7a2c5a);
+    border: 2px dashed #ff9ed8;
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+
+  .packTitle { color: #ff9ed8; font-size: 17px; }
+  .packDesc { font-size: 12px; opacity: 0.9; margin: 4px 0 6px; }
+
+  #packOpened {
+    color: #ff9ed8;
+    font-size: 15px;
+    margin-bottom: 6px;
+    display: none;
+  }
+
   .broomEmoji { font-size: 28px; }
   .broomInfo { flex: 1; }
   .broomName { font-size: 16px; color: #ffd86b; }
@@ -166,6 +193,7 @@
   <div id="shop" class="panel" style="display:none">
     <h2>🧹 Broom Shop</h2>
     <div>You have <span id="shopCoins">0</span> 🪙</div>
+    <div id="packOpened">✨ LEGENDARY PACK OPENED! ✨</div>
     <div id="shopList"></div>
     <button id="closeShop">Back</button>
     <button id="reset" class="small">Reset my progress</button>
@@ -201,8 +229,18 @@ const BROOMS = [
   { id: "nimbus",  name: "Nimbus 2000",      emoji: "✨", price: 45,  speed: 27, desc: "Harry's first broom. Seriously fast." },
   { id: "nimbus1", name: "Nimbus 2001",      emoji: "💫", price: 70,  speed: 32, desc: "Even quicker than the 2000. Slytherin's favourite." },
   { id: "firebolt",name: "Firebolt",         emoji: "🔥", price: 100, speed: 37, desc: "A world class racing broom. Wow." },
-  { id: "supreme", name: "Firebolt Supreme", emoji: "⚡", price: 150, speed: 44, desc: "The fastest broom ever made. Nothing escapes you." }
+  { id: "supreme", name: "Firebolt Supreme", emoji: "⚡", price: 150, speed: 44, desc: "The fastest broom ever made. Nothing escapes you." },
+
+  // ⭐ LEGENDARY BROOMS ⭐
+  // These don't exist in any book. They only come in the Legendary Pack,
+  // and every one of them is faster than the Firebolt Supreme.
+  { id: "thunder", name: "Thunderstreak 9",  emoji: "🌩️", price: 0, speed: 52, desc: "Forged inside a storm cloud. It crackles when it turns.", legendary: true },
+  { id: "phoenix", name: "Phoenix Feather",  emoji: "🪶", price: 0, speed: 62, desc: "Built from one phoenix feather. It never, ever gets tired.", legendary: true },
+  { id: "hugo",    name: "The Hugo 3000",    emoji: "🚀", price: 0, speed: 72, desc: "Invented by Hugo. Nothing in the sky is faster. Nothing.", legendary: true }
 ];
+
+const PACK_PRICE = 200;      // what the Legendary Pack costs
+
 // ----------------------------------------------------------
 
 const game = document.getElementById("game");
@@ -267,6 +305,7 @@ function save(key, value) {
 let coins = load("snitch_coins", 0);
 let owned = load("snitch_owned", ["star"]);
 let equippedId = load("snitch_equipped", "star");
+let packOwned = load("snitch_pack", false);   // have you bought the Legendary Pack?
 
 function equippedBroom() {
   return BROOMS.find(b => b.id === equippedId) || BROOMS[0];
@@ -279,16 +318,60 @@ function openShop() {
   drawShop();
 }
 
+// The locked pack, shown instead of the legendary brooms until you buy it
+function drawPackRow() {
+  const row = document.createElement("div");
+  row.className = "packRow";
+
+  const legendaryCount = BROOMS.filter(b => b.legendary).length;
+
+  const title = document.createElement("div");
+  title.className = "packTitle";
+  title.textContent = "⭐ Legendary Pack ⭐";
+
+  const desc = document.createElement("div");
+  desc.className = "packDesc";
+  desc.innerHTML = legendaryCount + " secret brooms that don't exist in any book.<br>" +
+                   "Every one is faster than the Firebolt Supreme.<br>" +
+                   "<b>🧹 ??? &nbsp; 🧹 ??? &nbsp; 🧹 ???</b>";
+
+  const btn = document.createElement("button");
+  btn.className = "small";
+  btn.textContent = "Open for " + PACK_PRICE + " 🪙";
+  btn.disabled = coins < PACK_PRICE;
+  btn.onclick = openPack;
+
+  row.append(title, desc, btn);
+  shopList.appendChild(row);
+}
+
+function openPack() {
+  if (coins < PACK_PRICE || packOwned) return;
+  coins -= PACK_PRICE;
+  packOwned = true;
+  BROOMS.filter(b => b.legendary).forEach(b => {
+    if (!owned.includes(b.id)) owned.push(b.id);
+  });
+  save("snitch_coins", coins);
+  save("snitch_owned", owned);
+  save("snitch_pack", packOwned);
+  document.getElementById("packOpened").style.display = "block";
+  drawShop();
+  updateScoreboard();
+}
+
 function drawShop() {
   shopCoins.textContent = coins;
   shopList.innerHTML = "";
 
   BROOMS.forEach(broom => {
+    // Legendary brooms stay hidden inside the pack until you open it
+    if (broom.legendary && !packOwned) return;
     const isOwned = owned.includes(broom.id);
     const isEquipped = broom.id === equippedId;
 
     const row = document.createElement("div");
-    row.className = "broomRow" + (isEquipped ? " equipped" : "");
+    row.className = "broomRow" + (isEquipped ? " equipped" : "") + (broom.legendary ? " legendary" : "");
 
     const emoji = document.createElement("div");
     emoji.className = "broomEmoji";
@@ -297,9 +380,9 @@ function drawShop() {
     const info = document.createElement("div");
     info.className = "broomInfo";
     info.innerHTML =
-      '<div class="broomName">' + broom.name + '</div>' +
+      '<div class="broomName">' + (broom.legendary ? "⭐ " : "") + broom.name + '</div>' +
       '<div class="broomDesc">' + broom.desc + '</div>' +
-      '<div class="broomSpeed">Speed: ' + "▮".repeat(Math.round(broom.speed / 5)) + '</div>';
+      '<div class="broomSpeed">Speed: ' + "▮".repeat(Math.min(15, Math.round(broom.speed / 5))) + '</div>';
 
     const btn = document.createElement("button");
     btn.className = "small";
@@ -330,6 +413,8 @@ function drawShop() {
     row.append(emoji, info, btn);
     shopList.appendChild(row);
   });
+
+  if (!packOwned) drawPackRow();
 }
 
 function updateBroom() {
@@ -480,9 +565,12 @@ resetBtn.addEventListener("click", () => {
   coins = 0;
   owned = ["star"];
   equippedId = "star";
+  packOwned = false;
   save("snitch_coins", coins);
   save("snitch_owned", owned);
   save("snitch_equipped", equippedId);
+  save("snitch_pack", packOwned);
+  document.getElementById("packOpened").style.display = "none";
   drawShop();
   updateScoreboard();
   updateBroom();

@@ -33,6 +33,24 @@ faster brooms — from the slow old **Shooting Star** all the way up to the
 Your coins and brooms are saved in your browser, so they're still there
 when you come back.
 
+## The Legendary Pack ⭐
+
+Save up **200 coins** and you can open the Legendary Pack. Inside are three
+brooms that don't exist in any book, and every one of them is faster than
+the Firebolt Supreme:
+
+| Broom | Speed |
+|---|---|
+| 🌩️ Thunderstreak 9 | 52 |
+| 🪶 Phoenix Feather | 62 |
+| 🚀 The Hugo 3000 | 72 |
+
+You can only buy the pack once, and it unlocks all three at the same time.
+
+## High score to beat 🏆
+
+**Level 20**, by Hugo.
+
 ## Play it here
 
 https://hugodltd.github.io/snitch-game/
