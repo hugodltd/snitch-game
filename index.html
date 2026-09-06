@@ -126,9 +126,24 @@
   }
 
   #player {
-    bottom: 8px;
-    font-size: 40px;
+    bottom: 4px;
     z-index: 3;
+    width: 50px;
+    height: 40px;
+  }
+
+  #player svg { display: block; }
+
+  .playerPic { width: 46px; flex-shrink: 0; }
+  .playerPic svg { width: 46px; height: 37px; }
+
+  .sectionTitle {
+    color: #ffd86b;
+    font-size: 14px;
+    text-align: left;
+    margin: 10px 0 6px;
+    border-bottom: 1px solid rgba(255, 216, 107, 0.35);
+    padding-bottom: 3px;
   }
 
   #levelUp { z-index: 4; }
@@ -495,6 +510,20 @@ const BROOMS = [
   { id: "hugo",    name: "The Hugo 3000",    emoji: "🚀", price: 0, speed: 72, desc: "Invented by Hugo. Nothing in the sky is faster. Nothing.", legendary: true }
 ];
 
+// The famous players you can buy. Add your own friends to this list!
+const PLAYER_PRICE = 10;
+const PLAYERS = [
+  { id: "you",      name: "You",              price: 0,  robe: "#4a2c7a", trim: "#ffd86b", hair: "#3a2418", skin: "#e8b98f", glasses: false, desc: "Just you, learning to fly." },
+  { id: "harry",    name: "Harry Potter",     price: 10, robe: "#7d1f2b", trim: "#c8a03a", hair: "#1b1410", skin: "#e8b98f", glasses: true,  desc: "Gryffindor Seeker. The youngest in a century." },
+  { id: "ron",      name: "Ron Weasley",      price: 10, robe: "#7d1f2b", trim: "#c8a03a", hair: "#c2521e", skin: "#f0c9a0", glasses: false, desc: "Gryffindor Keeper. Braver than he thinks." },
+  { id: "hermione", name: "Hermione Granger", price: 10, robe: "#7d1f2b", trim: "#c8a03a", hair: "#6b4423", skin: "#d99a6c", glasses: false, desc: "The cleverest witch of her year." },
+  { id: "ginny",    name: "Ginny Weasley",    price: 10, robe: "#7d1f2b", trim: "#c8a03a", hair: "#d4611f", skin: "#f0c9a0", glasses: false, desc: "Gryffindor Chaser with a wicked aim." },
+  { id: "draco",    name: "Draco Malfoy",     price: 10, robe: "#15452f", trim: "#aab4bf", hair: "#e6dca6", skin: "#f2d3b0", glasses: false, desc: "Slytherin Seeker. Never stops boasting." },
+  { id: "cedric",   name: "Cedric Diggory",   price: 10, robe: "#8a6a12", trim: "#2b2b2b", hair: "#6b4a2a", skin: "#e0b088", glasses: false, desc: "Hufflepuff Seeker and a true champion." },
+  { id: "cho",      name: "Cho Chang",        price: 10, robe: "#1d3a6b", trim: "#9aa8bf", hair: "#17130f", skin: "#d9a878", glasses: false, desc: "Ravenclaw Seeker. Very, very quick." },
+  { id: "krum",     name: "Viktor Krum",      price: 10, robe: "#5a1f1f", trim: "#c8b08a", hair: "#241a12", skin: "#c98f68", glasses: false, desc: "Durmstrang Seeker and World Cup star." }
+];
+
 const PACK_PRICE = 200;      // what the Legendary Pack costs
 const MYSTERY_PRICE = 10;    // what one Mystery Pack costs
 
@@ -543,6 +572,58 @@ function snitchSVG(size) {
     '<circle cx="21" cy="19" r="8.5" fill="url(#' + gold + ')" stroke="#8a6508" stroke-width="0.7"/>' +
     '<path d="M12.8 17 Q21 22.5, 29.2 17" fill="none" stroke="#8a6508" stroke-width="0.8" opacity="0.75"/>' +
     '<circle cx="17.8" cy="15.8" r="2.2" fill="#fffbe8" opacity="0.9"/>' +
+  '</svg>';
+}
+
+// A wizard sitting on a broom, flying to the right.
+// The broom's colour comes from how fast it is: slow brooms are plain
+// wood, fast ones glow hot orange, and legendary ones sparkle.
+function broomTint(speed) {
+  const t = Math.min(1, Math.max(0, (speed - 14) / 58));   // 0 = slowest, 1 = fastest
+  const r = Math.round(138 + t * 110);
+  const g = Math.round(106 - t * 30);
+  const b = Math.round(52 - t * 10);
+  return "rgb(" + r + "," + g + "," + b + ")";
+}
+
+function riderSVG(who, broom) {
+  const n = ++drawingCount;
+  const wood = broomTint(broom.speed);
+  const glow = broom.legendary
+    ? '<ellipse cx="24" cy="27" rx="24" ry="7" fill="#ff9ed8" opacity="0.28"/>'
+    : '';
+  const glasses = who.glasses
+    ? '<circle cx="36.4" cy="10.4" r="1.7" fill="none" stroke="#241a14" stroke-width="0.6"/>' +
+      '<circle cx="40" cy="10.1" r="1.5" fill="none" stroke="#241a14" stroke-width="0.6"/>' +
+      '<line x1="38.1" y1="10.3" x2="38.5" y2="10.2" stroke="#241a14" stroke-width="0.6"/>'
+    : '';
+
+  return '<svg width="50" height="40" viewBox="0 0 50 40">' +
+    glow +
+    // the broom: bristles on the left, handle sweeping up to the right
+    '<g>' +
+      '<line x1="4" y1="31" x2="46" y2="19" stroke="' + wood + '" stroke-width="3" stroke-linecap="round"/>' +
+      '<path d="M7 30.4 L0 26.5 M7 30.6 L-0.5 29.5 M7 31 L-0.5 32.5 M7 31.2 L0.5 35.5 M7 30.8 L2 24.5" ' +
+        'stroke="#c8992f" stroke-width="1.3" stroke-linecap="round" opacity="0.95"/>' +
+      '<rect x="6.5" y="28.6" width="2.4" height="4.4" rx="1" fill="#6b4a24" transform="rotate(-16 7.7 30.8)"/>' +
+    '</g>' +
+    '<ellipse cx="30" cy="19" rx="6" ry="7" fill="none"/>' +
+    // the cloak streaming out behind
+    '<path d="M22 20 C14 22, 8 28, 4 33 C12 31, 20 29, 26 26 Z" fill="' + who.robe + '" opacity="0.9"/>' +
+    '<path d="M22 21 C16 23, 11 27, 8 31 C14 29, 20 27, 24 25 Z" fill="' + who.trim + '" opacity="0.35"/>' +
+    // legs along the broom, then the body
+    '<path d="M26 24 L34 22 L35 26 L27 28 Z" fill="' + who.robe + '"/>' +
+    '<ellipse cx="30" cy="18" rx="7" ry="8" fill="' + who.robe + '"/>' +
+    '<rect x="26" y="15" width="9" height="2.6" fill="' + who.trim + '" opacity="0.9"/>' +
+    // arm reaching forward to the handle
+    '<path d="M34 16 L43 19" stroke="' + who.robe + '" stroke-width="3.2" stroke-linecap="round"/>' +
+    '<circle cx="43.5" cy="19.2" r="1.9" fill="' + who.skin + '"/>' +
+    // head: draw the hair as a circle first, then the face slightly
+    // lower and to the right, so hair shows on top and at the back
+    '<circle cx="35.4" cy="9" r="5.5" fill="' + who.hair + '"/>' +
+    '<path d="M31 12 C29.5 14.5, 30.5 16.5, 32.5 16 C31.6 14.6, 31.2 13.4, 31 12 Z" fill="' + who.hair + '"/>' +
+    '<circle cx="36.6" cy="10.3" r="4.5" fill="' + who.skin + '"/>' +
+    glasses +
   '</svg>';
 }
 
@@ -629,10 +710,16 @@ let owned = load("snitch_owned", ["star"]);
 let equippedId = load("snitch_equipped", "star");
 let packOwned = load("snitch_pack", false);   // have you bought the Legendary Pack?
 let packsOpened = load("snitch_packs_opened", 0);
+let ownedPlayers = load("snitch_players", ["you"]);
+let equippedPlayerId = load("snitch_player", "you");
 let lastReveal = "";                          // what your last Mystery Pack gave you
 
 function equippedBroom() {
   return BROOMS.find(b => b.id === equippedId) || BROOMS[0];
+}
+
+function equippedPlayer() {
+  return PLAYERS.find(p => p.id === equippedPlayerId) || PLAYERS[0];
 }
 
 // ---- The shop ----
@@ -640,6 +727,71 @@ function openShop() {
   shop.style.display = "flex";
   message.style.display = "none";
   drawShop();
+}
+
+// A little heading inside the shop, like "Famous Players"
+function drawSectionTitle(text) {
+  const t = document.createElement("div");
+  t.className = "sectionTitle";
+  t.textContent = text;
+  shopList.appendChild(t);
+}
+
+// One row per famous player you can buy
+function drawPlayerRows() {
+  drawSectionTitle("⚡ Famous Players");
+
+  PLAYERS.forEach(who => {
+    const isOwned = ownedPlayers.includes(who.id);
+    const isEquipped = who.id === equippedPlayerId;
+
+    const row = document.createElement("div");
+    row.className = "broomRow" + (isEquipped ? " equipped" : "");
+
+    const pic = document.createElement("div");
+    pic.className = "playerPic";
+    pic.innerHTML = riderSVG(who, equippedBroom());
+
+    const info = document.createElement("div");
+    info.className = "broomInfo";
+    info.innerHTML =
+      '<div class="broomName">' + who.name + '</div>' +
+      '<div class="broomDesc">' + who.desc + '</div>';
+
+    const btn = document.createElement("button");
+    btn.className = "small";
+
+    if (isEquipped) {
+      btn.textContent = "Flying";
+      btn.disabled = true;
+    } else if (isOwned) {
+      btn.textContent = "Use";
+      btn.onclick = () => {
+        equippedPlayerId = who.id;
+        save("snitch_player", equippedPlayerId);
+        drawShop();
+        updateBroom();
+      };
+    } else {
+      btn.textContent = who.price + " 🪙";
+      btn.disabled = coins < who.price;
+      btn.onclick = () => {
+        if (coins < who.price) return;
+        coins -= who.price;
+        ownedPlayers.push(who.id);
+        equippedPlayerId = who.id;
+        save("snitch_coins", coins);
+        save("snitch_players", ownedPlayers);
+        save("snitch_player", equippedPlayerId);
+        drawShop();
+        updateScoreboard();
+        updateBroom();
+      };
+    }
+
+    row.append(pic, info, btn);
+    shopList.appendChild(row);
+  });
 }
 
 // Pick a whole number between min and max (both included)
@@ -763,6 +915,9 @@ function drawShop() {
   // Only offer the big pack while there are still legendary brooms to get
   if (BROOMS.some(b => b.legendary && !owned.includes(b.id))) drawPackRow();
 
+  drawPlayerRows();
+  drawSectionTitle("🧹 Brooms");
+
   BROOMS.forEach(broom => {
     // Legendary brooms stay hidden inside the pack until you open it
     if (broom.legendary && !packOwned) return;
@@ -817,8 +972,9 @@ function drawShop() {
 
 function updateBroom() {
   const broom = equippedBroom();
-  player.textContent = broom.emoji;
-  broomLabel.innerHTML = "Flying: <b>" + broom.name + "</b>";
+  const who = equippedPlayer();
+  player.innerHTML = riderSVG(who, broom);
+  broomLabel.innerHTML = "<b>" + who.name + "</b> on a <b>" + broom.name + "</b>";
 }
 
 // ---- The game ----
@@ -993,6 +1149,10 @@ resetBtn.addEventListener("click", () => {
   packOwned = false;
   packsOpened = 0;
   lastReveal = "";
+  ownedPlayers = ["you"];
+  equippedPlayerId = "you";
+  save("snitch_players", ownedPlayers);
+  save("snitch_player", equippedPlayerId);
   save("snitch_coins", coins);
   save("snitch_owned", owned);
   save("snitch_equipped", equippedId);

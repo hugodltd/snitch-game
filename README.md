@@ -39,6 +39,20 @@ remembers the best level you have ever reached.
 The speed stops climbing at level 13, so it stays hard but always
 possible — nothing can ever fall so fast it skips straight past you.
 
+## Famous Players ⚡
+
+You are a real wizard sitting on the broom, not just a broom. For
+**10 coins each** you can buy famous players in the shop and fly as them:
+
+Harry Potter, Ron Weasley, Hermione Granger, Ginny Weasley, Draco Malfoy,
+Cedric Diggory, Cho Chang and Viktor Krum.
+
+Each one has their own house robes and hair, and Harry has his glasses.
+Once you own a player you can swap between them for free.
+
+The broom you are riding changes colour too: slow brooms are plain wood,
+fast ones glow hot orange, and legendary ones sparkle.
+
 ## The Broom Shop 🧹
 
 Every Snitch you catch is a coin you keep. Spend them in the shop on
