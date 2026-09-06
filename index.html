@@ -119,7 +119,22 @@
   .broomDesc { font-size: 12px; opacity: 0.85; }
   .broomSpeed { font-size: 12px; opacity: 0.7; }
 
+  /* The "LEVEL 2!" banner that flashes across the middle */
+  #levelUp {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 40%;
+    text-align: center;
+    font-size: 34px;
+    color: #ffd86b;
+    text-shadow: 0 0 14px #ffd86b;
+    pointer-events: none;
+    display: none;
+  }
+
   #coins { color: #ffd86b; }
+  #level { color: #ffd86b; }
   #help { margin: 12px; font-size: 14px; opacity: 0.8; text-align: center; }
   #reset { font-size: 11px; opacity: 0.5; margin-top: 4px; background: none; color: #f5e6c8; }
 </style>
@@ -128,6 +143,7 @@
 
 <h1>⚡ Catch the Golden Snitch</h1>
 <div id="scoreboard">
+  Level: <span id="level">1</span> &nbsp;
   Score: <span id="score">0</span> &nbsp;
   Lives: <span id="lives">❤️❤️❤️</span> &nbsp;
   Coins: <span id="coins">0</span> 🪙
@@ -135,6 +151,7 @@
 
 <div id="game">
   <div id="player" class="thing">🧹</div>
+  <div id="levelUp"></div>
 
   <!-- The start / game over screen -->
   <div id="message" class="panel">
@@ -156,13 +173,24 @@
 </div>
 
 <p id="help">Move with the ← → arrow keys, or drag your finger on the screen.<br>
-Every Snitch you catch is a coin you keep!</p>
+Every Snitch you catch is a coin you keep.<br>
+Every 8 Snitches you go up a level — and it gets faster!</p>
 
 <script>
 // ---- Things you can change to make the game your own! ----
-const FALL_SPEED = 2.5;      // how fast things fall
+const FALL_SPEED = 2.5;      // how fast things fall on level 1
 const SPAWN_EVERY = 55;      // frames between new things (smaller = harder)
 const BLUDGER_CHANCE = 0.3;  // 0.3 means 30% of things are Bludgers
+
+// Levels! Every level makes the game a bit harder.
+const SNITCHES_PER_LEVEL = 8;      // catch this many Snitches to level up
+const SPEED_PER_LEVEL = 0.55;      // things fall this much faster each level
+const SPAWN_FASTER_PER_LEVEL = 4;  // things appear this many frames sooner
+const MIN_SPAWN = 16;              // but never faster than this
+const MAX_FALL_SPEED = 9;          // top speed, so things can never skip past your broom
+const BLUDGER_PER_LEVEL = 0.02;    // slightly more Bludgers each level
+const MAX_BLUDGER_CHANCE = 0.5;    // at most half of them are Bludgers
+const LEVEL_BONUS_COINS = 5;       // free coins for reaching a new level
 
 // All the brooms in the shop. Add your own to this list!
 // "speed" is how far the broom moves each time you press an arrow key.
@@ -192,12 +220,30 @@ const shopCoins = document.getElementById("shopCoins");
 const closeShop = document.getElementById("closeShop");
 const resetBtn = document.getElementById("reset");
 
+const levelEl = document.getElementById("level");
+const levelUpEl = document.getElementById("levelUp");
+
 let playerX = 190;
 let score = 0;
 let lives = 3;
+let level = 1;
 let fallingThings = [];
 let playing = false;
 let framesUntilSpawn = 0;
+let bannerFrames = 0;   // how many frames the "LEVEL UP" banner still shows
+
+// These three get harder as your level goes up.
+function fallSpeedNow() {
+  return Math.min(MAX_FALL_SPEED, FALL_SPEED + (level - 1) * SPEED_PER_LEVEL);
+}
+
+function spawnEveryNow() {
+  return Math.max(MIN_SPAWN, SPAWN_EVERY - (level - 1) * SPAWN_FASTER_PER_LEVEL);
+}
+
+function bludgerChanceNow() {
+  return Math.min(MAX_BLUDGER_CHANCE, BLUDGER_CHANCE + (level - 1) * BLUDGER_PER_LEVEL);
+}
 
 // ---- Saving your coins and brooms in the browser ----
 // localStorage remembers things even after you close the page.
@@ -296,6 +342,9 @@ function updateBroom() {
 function startGame() {
   score = 0;
   lives = 3;
+  level = 1;
+  bannerFrames = 0;
+  levelUpEl.style.display = "none";
   playerX = game.clientWidth / 2 - 20;
   fallingThings.forEach(t => t.el.remove());
   fallingThings = [];
@@ -311,11 +360,12 @@ function updateScoreboard() {
   scoreEl.textContent = score;
   livesEl.textContent = "❤️".repeat(lives) || "💀";
   coinsEl.textContent = coins;
+  levelEl.textContent = level;
 }
 
 // Make a new Snitch or Bludger at a random spot along the top.
 function spawnThing() {
-  const isBludger = Math.random() < BLUDGER_CHANCE;
+  const isBludger = Math.random() < bludgerChanceNow();
   const el = document.createElement("div");
   el.className = "thing";
   el.textContent = isBludger ? "⚫" : "🟡";
@@ -333,12 +383,18 @@ function gameLoop() {
   framesUntilSpawn--;
   if (framesUntilSpawn <= 0) {
     spawnThing();
-    framesUntilSpawn = SPAWN_EVERY;
+    framesUntilSpawn = spawnEveryNow();
+  }
+
+  // Hide the "LEVEL UP" banner once its time is up
+  if (bannerFrames > 0) {
+    bannerFrames--;
+    if (bannerFrames === 0) levelUpEl.style.display = "none";
   }
 
   for (let i = fallingThings.length - 1; i >= 0; i--) {
     const thing = fallingThings[i];
-    thing.y += FALL_SPEED;
+    thing.y += fallSpeedNow();
     thing.el.style.top = thing.y + "px";
 
     const thingX = parseFloat(thing.el.style.left);
@@ -359,6 +415,17 @@ function gameLoop() {
         score++;
         coins++;                        // every Snitch is a coin you keep
         save("snitch_coins", coins);    // save straight away, so you never lose coins
+
+        // Reached a new level?
+        const newLevel = Math.floor(score / SNITCHES_PER_LEVEL) + 1;
+        if (newLevel > level) {
+          level = newLevel;
+          coins += LEVEL_BONUS_COINS;
+          save("snitch_coins", coins);
+          levelUpEl.textContent = "LEVEL " + level + "!";
+          levelUpEl.style.display = "block";
+          bannerFrames = 80;            // show the banner for about 1.3 seconds
+        }
       }
       updateScoreboard();
       thing.el.remove();
@@ -374,11 +441,17 @@ function gameLoop() {
 
 function endGame() {
   playing = false;
+  bannerFrames = 0;
+  levelUpEl.style.display = "none";
   save("snitch_coins", coins);
+  save("snitch_best", Math.max(level, load("snitch_best", 1)));
   updateScoreboard();
   message.querySelector("h2").textContent = "Game Over!";
   message.querySelector("p").innerHTML =
-    "You caught <b>" + score + "</b> Snitches.<br>You now have <b>" + coins + "</b> 🪙";
+    "You reached <b>level " + level + "</b>!<br>" +
+    "You caught <b>" + score + "</b> Snitches.<br>" +
+    "You now have <b>" + coins + "</b> 🪙<br>" +
+    "<small>Best level ever: " + load("snitch_best", 1) + "</small>";
   startBtn.textContent = "Play Again";
   message.style.display = "flex";
 }
