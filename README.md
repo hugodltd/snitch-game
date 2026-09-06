@@ -10,6 +10,15 @@ and dodge the Bludgers ⚫. You get 3 lives.
 - Move with the **←** and **→** arrow keys
 - Or move your mouse / drag your finger
 
+## The Broom Shop 🧹
+
+Every Snitch you catch is a coin you keep. Spend them in the shop on
+faster brooms — from the slow old **Shooting Star** all the way up to the
+**Firebolt Supreme**, which moves three times faster.
+
+Your coins and brooms are saved in your browser, so they're still there
+when you come back.
+
 ## Play it here
 
 https://hugodltd.github.io/snitch-game/
@@ -26,3 +35,6 @@ const FALL_SPEED = 2.5;      // how fast things fall
 const SPAWN_EVERY = 55;      // frames between new things (smaller = harder)
 const BLUDGER_CHANCE = 0.3;  // 0.3 means 30% of things are Bludgers
 ```
+
+Right underneath is the `BROOMS` list. Add a line to it to invent your
+own broom — give it a name, an emoji, a price and a speed.

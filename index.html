@@ -51,25 +51,27 @@
     font-size: 40px;
   }
 
-  #message {
+  /* The panels that sit on top of the game (start screen and shop) */
+  .panel {
     position: absolute;
     inset: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: rgba(26, 16, 51, 0.85);
+    background: rgba(26, 16, 51, 0.92);
     text-align: center;
-    padding: 20px;
+    padding: 16px;
+    box-sizing: border-box;
   }
 
-  #message h2 { color: #ffd86b; margin: 0 0 10px; }
+  .panel h2 { color: #ffd86b; margin: 0 0 10px; }
 
   button {
     font-family: Georgia, serif;
     font-size: 18px;
     padding: 10px 22px;
-    margin-top: 12px;
+    margin-top: 10px;
     background: #ffd86b;
     color: #2b1b5a;
     border: none;
@@ -77,38 +79,118 @@
     cursor: pointer;
   }
 
-  #help { margin: 12px; font-size: 14px; opacity: 0.8; }
+  button.small {
+    font-size: 14px;
+    padding: 6px 12px;
+    margin-top: 0;
+  }
+
+  button:disabled {
+    background: #6b5f8a;
+    color: #cfc6e0;
+    cursor: not-allowed;
+  }
+
+  /* The shop list scrolls, because there are lots of brooms */
+  #shopList {
+    width: 100%;
+    overflow-y: auto;
+    flex: 1;
+    margin: 6px 0;
+  }
+
+  .broomRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(74, 44, 122, 0.6);
+    border: 2px solid #6b4fa0;
+    border-radius: 10px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    text-align: left;
+  }
+
+  .broomRow.equipped { border-color: #ffd86b; }
+
+  .broomEmoji { font-size: 28px; }
+  .broomInfo { flex: 1; }
+  .broomName { font-size: 16px; color: #ffd86b; }
+  .broomDesc { font-size: 12px; opacity: 0.85; }
+  .broomSpeed { font-size: 12px; opacity: 0.7; }
+
+  #coins { color: #ffd86b; }
+  #help { margin: 12px; font-size: 14px; opacity: 0.8; text-align: center; }
+  #reset { font-size: 11px; opacity: 0.5; margin-top: 4px; background: none; color: #f5e6c8; }
 </style>
 </head>
 <body>
 
 <h1>⚡ Catch the Golden Snitch</h1>
-<div id="scoreboard">Score: <span id="score">0</span> &nbsp; Lives: <span id="lives">❤️❤️❤️</span></div>
+<div id="scoreboard">
+  Score: <span id="score">0</span> &nbsp;
+  Lives: <span id="lives">❤️❤️❤️</span> &nbsp;
+  Coins: <span id="coins">0</span> 🪙
+</div>
 
 <div id="game">
   <div id="player" class="thing">🧹</div>
-  <div id="message">
+
+  <!-- The start / game over screen -->
+  <div id="message" class="panel">
     <h2>Ready, Seeker?</h2>
     <p>Catch the Snitches 🟡<br>Dodge the Bludgers ⚫</p>
+    <p id="broomLabel"></p>
     <button id="startBtn">Start Game</button>
+    <button id="shopBtn">🧹 Broom Shop</button>
+  </div>
+
+  <!-- The shop screen -->
+  <div id="shop" class="panel" style="display:none">
+    <h2>🧹 Broom Shop</h2>
+    <div>You have <span id="shopCoins">0</span> 🪙</div>
+    <div id="shopList"></div>
+    <button id="closeShop">Back</button>
+    <button id="reset" class="small">Reset my progress</button>
   </div>
 </div>
 
-<p id="help">Move with the ← → arrow keys, or drag your finger on the screen.</p>
+<p id="help">Move with the ← → arrow keys, or drag your finger on the screen.<br>
+Every Snitch you catch is a coin you keep!</p>
 
 <script>
 // ---- Things you can change to make the game your own! ----
 const FALL_SPEED = 2.5;      // how fast things fall
 const SPAWN_EVERY = 55;      // frames between new things (smaller = harder)
 const BLUDGER_CHANCE = 0.3;  // 0.3 means 30% of things are Bludgers
+
+// All the brooms in the shop. Add your own to this list!
+// "speed" is how far the broom moves each time you press an arrow key.
+const BROOMS = [
+  { id: "star",    name: "Shooting Star",    emoji: "🧹", price: 0,   speed: 14, desc: "An old, slow school broom. Everyone starts here." },
+  { id: "sweep",   name: "Cleansweep Seven", emoji: "🧹", price: 10,  speed: 18, desc: "Sturdy and reliable. A proper upgrade." },
+  { id: "comet",   name: "Comet 260",        emoji: "☄️", price: 25,  speed: 22, desc: "Light and zippy, but turns a bit wide." },
+  { id: "nimbus",  name: "Nimbus 2000",      emoji: "✨", price: 45,  speed: 27, desc: "Harry's first broom. Seriously fast." },
+  { id: "nimbus1", name: "Nimbus 2001",      emoji: "💫", price: 70,  speed: 32, desc: "Even quicker than the 2000. Slytherin's favourite." },
+  { id: "firebolt",name: "Firebolt",         emoji: "🔥", price: 100, speed: 37, desc: "A world class racing broom. Wow." },
+  { id: "supreme", name: "Firebolt Supreme", emoji: "⚡", price: 150, speed: 44, desc: "The fastest broom ever made. Nothing escapes you." }
+];
 // ----------------------------------------------------------
 
 const game = document.getElementById("game");
 const player = document.getElementById("player");
 const scoreEl = document.getElementById("score");
 const livesEl = document.getElementById("lives");
+const coinsEl = document.getElementById("coins");
 const message = document.getElementById("message");
 const startBtn = document.getElementById("startBtn");
+const broomLabel = document.getElementById("broomLabel");
+const shop = document.getElementById("shop");
+const shopBtn = document.getElementById("shopBtn");
+const shopList = document.getElementById("shopList");
+const shopCoins = document.getElementById("shopCoins");
+const closeShop = document.getElementById("closeShop");
+const resetBtn = document.getElementById("reset");
 
 let playerX = 190;
 let score = 0;
@@ -117,6 +199,100 @@ let fallingThings = [];
 let playing = false;
 let framesUntilSpawn = 0;
 
+// ---- Saving your coins and brooms in the browser ----
+// localStorage remembers things even after you close the page.
+function load(key, fallback) {
+  try {
+    const saved = localStorage.getItem(key);
+    return saved === null ? fallback : JSON.parse(saved);
+  } catch (e) {
+    return fallback;   // some browsers block saving, so just carry on
+  }
+}
+
+function save(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (e) {
+    // saving isn't allowed here, no problem, the game still works
+  }
+}
+
+let coins = load("snitch_coins", 0);
+let owned = load("snitch_owned", ["star"]);
+let equippedId = load("snitch_equipped", "star");
+
+function equippedBroom() {
+  return BROOMS.find(b => b.id === equippedId) || BROOMS[0];
+}
+
+// ---- The shop ----
+function openShop() {
+  shop.style.display = "flex";
+  message.style.display = "none";
+  drawShop();
+}
+
+function drawShop() {
+  shopCoins.textContent = coins;
+  shopList.innerHTML = "";
+
+  BROOMS.forEach(broom => {
+    const isOwned = owned.includes(broom.id);
+    const isEquipped = broom.id === equippedId;
+
+    const row = document.createElement("div");
+    row.className = "broomRow" + (isEquipped ? " equipped" : "");
+
+    const emoji = document.createElement("div");
+    emoji.className = "broomEmoji";
+    emoji.textContent = broom.emoji;
+
+    const info = document.createElement("div");
+    info.className = "broomInfo";
+    info.innerHTML =
+      '<div class="broomName">' + broom.name + '</div>' +
+      '<div class="broomDesc">' + broom.desc + '</div>' +
+      '<div class="broomSpeed">Speed: ' + "▮".repeat(Math.round(broom.speed / 5)) + '</div>';
+
+    const btn = document.createElement("button");
+    btn.className = "small";
+
+    if (isEquipped) {
+      btn.textContent = "Flying";
+      btn.disabled = true;
+    } else if (isOwned) {
+      btn.textContent = "Use";
+      btn.onclick = () => { equippedId = broom.id; save("snitch_equipped", equippedId); drawShop(); updateBroom(); };
+    } else {
+      btn.textContent = broom.price + " 🪙";
+      btn.disabled = coins < broom.price;
+      btn.onclick = () => {
+        if (coins < broom.price) return;
+        coins -= broom.price;
+        owned.push(broom.id);
+        equippedId = broom.id;
+        save("snitch_coins", coins);
+        save("snitch_owned", owned);
+        save("snitch_equipped", equippedId);
+        drawShop();
+        updateScoreboard();
+        updateBroom();
+      };
+    }
+
+    row.append(emoji, info, btn);
+    shopList.appendChild(row);
+  });
+}
+
+function updateBroom() {
+  const broom = equippedBroom();
+  player.textContent = broom.emoji;
+  broomLabel.innerHTML = "Flying: <b>" + broom.name + "</b>";
+}
+
+// ---- The game ----
 function startGame() {
   score = 0;
   lives = 3;
@@ -126,6 +302,7 @@ function startGame() {
   playing = true;
   framesUntilSpawn = 0;
   message.style.display = "none";
+  shop.style.display = "none";
   updateScoreboard();
   requestAnimationFrame(gameLoop);
 }
@@ -133,6 +310,7 @@ function startGame() {
 function updateScoreboard() {
   scoreEl.textContent = score;
   livesEl.textContent = "❤️".repeat(lives) || "💀";
+  coinsEl.textContent = coins;
 }
 
 // Make a new Snitch or Bludger at a random spot along the top.
@@ -172,9 +350,15 @@ function gameLoop() {
     if (hitPlayer) {
       if (thing.isBludger) {
         lives--;
-        if (lives <= 0) return endGame();
+        if (lives <= 0) {
+          thing.el.remove();
+          fallingThings.splice(i, 1);
+          return endGame();
+        }
       } else {
         score++;
+        coins++;                        // every Snitch is a coin you keep
+        save("snitch_coins", coins);    // save straight away, so you never lose coins
       }
       updateScoreboard();
       thing.el.remove();
@@ -190,17 +374,20 @@ function gameLoop() {
 
 function endGame() {
   playing = false;
+  save("snitch_coins", coins);
   updateScoreboard();
   message.querySelector("h2").textContent = "Game Over!";
-  message.querySelector("p").innerHTML = "You caught <b>" + score + "</b> Snitches.";
+  message.querySelector("p").innerHTML =
+    "You caught <b>" + score + "</b> Snitches.<br>You now have <b>" + coins + "</b> 🪙";
   startBtn.textContent = "Play Again";
   message.style.display = "flex";
 }
 
-// Keyboard controls
+// Keyboard controls. Faster brooms move further with each press!
 document.addEventListener("keydown", (e) => {
-  if (e.key === "ArrowLeft") playerX = Math.max(0, playerX - 30);
-  if (e.key === "ArrowRight") playerX = Math.min(game.clientWidth - 40, playerX + 30);
+  const step = equippedBroom().speed;
+  if (e.key === "ArrowLeft") playerX = Math.max(0, playerX - step);
+  if (e.key === "ArrowRight") playerX = Math.min(game.clientWidth - 40, playerX + step);
 });
 
 // Touch / mouse controls
@@ -214,6 +401,22 @@ game.addEventListener("touchmove", (e) => {
 }, { passive: false });
 
 startBtn.addEventListener("click", startGame);
+shopBtn.addEventListener("click", openShop);
+closeShop.addEventListener("click", () => { shop.style.display = "none"; message.style.display = "flex"; });
+resetBtn.addEventListener("click", () => {
+  coins = 0;
+  owned = ["star"];
+  equippedId = "star";
+  save("snitch_coins", coins);
+  save("snitch_owned", owned);
+  save("snitch_equipped", equippedId);
+  drawShop();
+  updateScoreboard();
+  updateBroom();
+});
+
+updateBroom();
+updateScoreboard();
 </script>
 
 </body>
