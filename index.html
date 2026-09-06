@@ -40,10 +40,65 @@
     overflow: hidden;
   }
 
+  /* The Quidditch stadium painted behind the game */
+  #backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;   /* you can't click the scenery */
+    opacity: 0.62;          /* keep it dim so the Snitches stand out */
+  }
+
+  #backdrop svg { width: 100%; height: 100%; display: block; }
+
+  /* The crowd bobs up and down, cheering. Three speeds so they don't
+     all move together - that's what makes it look like a real crowd. */
+  .cheerA { animation: cheer 0.85s ease-in-out infinite alternate; }
+  .cheerB { animation: cheer 1.15s ease-in-out infinite alternate; animation-delay: 0.25s; }
+  .cheerC { animation: cheer 0.7s  ease-in-out infinite alternate; animation-delay: 0.5s; }
+
+  @keyframes cheer {
+    from { transform: translateY(0); }
+    to   { transform: translateY(-3.5px); }
+  }
+
+  /* little house banners waving in the stands */
+  .wave { animation: wave 1.5s ease-in-out infinite alternate; }
+
+  @keyframes wave {
+    from { transform: rotate(-9deg); }
+    to   { transform: rotate(9deg); }
+  }
+
+  /* wand lights twinkling in the crowd */
+  .spark { animation: spark 1.9s ease-in-out infinite alternate; }
+
+  @keyframes spark {
+    from { opacity: 0.1; }
+    to   { opacity: 0.95; }
+  }
+
+  /* The players drift slowly around the pitch */
+  .flyer { animation: drift 9s ease-in-out infinite alternate; }
+  .flyer2 { animation: drift2 11s ease-in-out infinite alternate; }
+  .flyer3 { animation: drift 13s ease-in-out infinite alternate reverse; }
+  .flyer4 { animation: drift2 15s ease-in-out infinite alternate reverse; }
+
+  @keyframes drift {
+    from { transform: translate(0, 0); }
+    to   { transform: translate(26px, -14px); }
+  }
+
+  @keyframes drift2 {
+    from { transform: translate(0, 0); }
+    to   { transform: translate(-22px, 12px); }
+  }
+
   .thing {
     position: absolute;
     font-size: 34px;
     line-height: 1;
+    z-index: 2;          /* Snitches fly in front of the stadium */
   }
 
   /* A Golden Snitch: a little gold ball with silver wings that flap */
@@ -73,7 +128,11 @@
   #player {
     bottom: 8px;
     font-size: 40px;
+    z-index: 3;
   }
+
+  #levelUp { z-index: 4; }
+  .panel { z-index: 5; }
 
   /* The panels that sit on top of the game (start screen and shop) */
   .panel {
@@ -221,6 +280,152 @@
 </div>
 
 <div id="game">
+
+  <!-- ===== The Quidditch stadium at Hogwarts ===== -->
+  <div id="backdrop">
+  <svg viewBox="0 0 420 520" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <linearGradient id="towerWood" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#3a2550"/>
+        <stop offset="100%" stop-color="#241537"/>
+      </linearGradient>
+      <radialGradient id="moonGlow">
+        <stop offset="0%" stop-color="#fff8dc" stop-opacity="0.9"/>
+        <stop offset="100%" stop-color="#fff8dc" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+
+    <!-- the moon and its glow -->
+    <circle cx="330" cy="62" r="46" fill="url(#moonGlow)"/>
+    <circle cx="330" cy="62" r="19" fill="#f6efd0" opacity="0.85"/>
+    <circle cx="323" cy="56" r="4" fill="#ded6b6" opacity="0.5"/>
+    <circle cx="337" cy="68" r="3" fill="#ded6b6" opacity="0.4"/>
+
+    <!-- stars -->
+    <g fill="#fff8e0">
+      <circle cx="30" cy="40" r="1.5" opacity="0.8"/><circle cx="80" cy="22" r="1" opacity="0.6"/>
+      <circle cx="130" cy="55" r="1.3" opacity="0.7"/><circle cx="185" cy="28" r="1" opacity="0.5"/>
+      <circle cx="240" cy="48" r="1.4" opacity="0.75"/><circle cx="300" cy="150" r="1.1" opacity="0.5"/>
+      <circle cx="60" cy="95" r="1" opacity="0.5"/><circle cx="160" cy="105" r="1.2" opacity="0.6"/>
+      <circle cx="270" cy="120" r="1" opacity="0.45"/><circle cx="390" cy="135" r="1.3" opacity="0.6"/>
+      <circle cx="20" cy="150" r="1.1" opacity="0.5"/><circle cx="205" cy="160" r="1" opacity="0.4"/>
+      <circle cx="360" cy="30" r="1.2" opacity="0.6"/><circle cx="110" cy="140" r="1" opacity="0.45"/>
+    </g>
+
+    <!-- Hogwarts castle far away on the hill -->
+    <g fill="#1d1440" opacity="0.95">
+      <path d="M0 300 L0 250 L18 250 L18 236 L30 236 L30 250 L46 250 L46 262 L64 262
+               L64 228 L74 214 L84 228 L84 262 L104 262 L104 244 L116 244 L116 232
+               L126 218 L136 232 L136 244 L150 244 L150 268 L172 268 L172 240
+               L182 224 L192 240 L192 268 L210 268 L210 282 L0 282 Z"/>
+      <path d="M420 300 L420 258 L404 258 L404 240 L394 226 L384 240 L384 258 L366 258
+               L366 270 L348 270 L348 250 L338 236 L328 250 L328 270 L308 270 L308 284
+               L420 284 Z"/>
+    </g>
+    <!-- lit castle windows -->
+    <g fill="#ffcf6b" opacity="0.75">
+      <rect x="71" y="234" width="3" height="5"/><rect x="123" y="238" width="3" height="5"/>
+      <rect x="179" y="244" width="3" height="5"/><rect x="391" y="246" width="3" height="5"/>
+      <rect x="335" y="256" width="3" height="5"/><rect x="24" y="256" width="3" height="6"/>
+      <rect x="110" y="252" width="3" height="6"/><rect x="163" y="274" width="3" height="5"/>
+    </g>
+
+    <!-- the far side of the stadium, packed with cheering fans -->
+    <rect x="0" y="286" width="420" height="30" fill="#241a44"/>
+    <rect x="0" y="286" width="420" height="2.5" fill="#3d2b64"/>
+    <g id="crowd"></g>
+
+    <!-- the three golden goal hoops out on the pitch -->
+    <g opacity="0.5">
+      <rect x="139" y="292" width="3" height="80" fill="#6b5a2a"/>
+      <ellipse cx="140.5" cy="284" rx="13" ry="16" fill="none" stroke="#d9b24a" stroke-width="3.5"/>
+      <rect x="208" y="278" width="3.5" height="94" fill="#6b5a2a"/>
+      <ellipse cx="210" cy="266" rx="16" ry="20" fill="none" stroke="#e2bb52" stroke-width="4"/>
+      <rect x="278" y="292" width="3" height="80" fill="#6b5a2a"/>
+      <ellipse cx="279.5" cy="284" rx="13" ry="16" fill="none" stroke="#d9b24a" stroke-width="3.5"/>
+    </g>
+
+    <!-- spectator towers down both sides, with house flags -->
+    <g>
+      <!-- left tower -->
+      <rect x="6" y="316" width="62" height="204" fill="url(#towerWood)"/>
+      <path d="M2 316 L37 286 L72 316 Z" fill="#2d1b45"/>
+      <rect x="6" y="342" width="62" height="7" fill="#170e2b" opacity="0.8"/>
+      <rect x="6" y="382" width="62" height="7" fill="#170e2b" opacity="0.8"/>
+      <!-- Gryffindor flag -->
+      <rect x="36" y="252" width="2" height="36" fill="#5a4a2a"/>
+      <path d="M38 254 L66 262 L38 272 Z" fill="#7d1f2b"/>
+      <path d="M38 259 L56 263 L38 267 Z" fill="#c8a03a" opacity="0.85"/>
+      <!-- tiny crowd -->
+      <g fill="#0f0920" opacity="0.75">
+        <circle cx="16" cy="336" r="4"/><circle cx="28" cy="334" r="4"/><circle cx="40" cy="336" r="4"/>
+        <circle cx="52" cy="334" r="4"/><circle cx="22" cy="376" r="4"/><circle cx="34" cy="374" r="4"/>
+        <circle cx="46" cy="376" r="4"/><circle cx="58" cy="374" r="4"/>
+      </g>
+
+      <!-- right tower -->
+      <rect x="352" y="316" width="62" height="204" fill="url(#towerWood)"/>
+      <path d="M348 316 L383 286 L418 316 Z" fill="#2d1b45"/>
+      <rect x="352" y="342" width="62" height="7" fill="#170e2b" opacity="0.8"/>
+      <rect x="352" y="382" width="62" height="7" fill="#170e2b" opacity="0.8"/>
+      <!-- Slytherin flag -->
+      <rect x="382" y="252" width="2" height="36" fill="#5a4a2a"/>
+      <path d="M382 254 L354 262 L382 272 Z" fill="#15452f"/>
+      <path d="M382 259 L364 263 L382 267 Z" fill="#aab4bf" opacity="0.8"/>
+      <g fill="#0f0920" opacity="0.75">
+        <circle cx="362" cy="336" r="4"/><circle cx="374" cy="334" r="4"/><circle cx="386" cy="336" r="4"/>
+        <circle cx="398" cy="334" r="4"/><circle cx="368" cy="376" r="4"/><circle cx="380" cy="374" r="4"/>
+        <circle cx="392" cy="376" r="4"/><circle cx="404" cy="374" r="4"/>
+      </g>
+    </g>
+
+    <!-- ===== the players ===== -->
+    <!-- Gryffindor (scarlet and gold) -->
+    <g class="flyer" opacity="0.85">
+      <g transform="translate(92,196) scale(1.15)">
+        <line x1="-14" y1="6" x2="16" y2="0" stroke="#6b4a24" stroke-width="2.4"/>
+        <path d="M16 0 L24 -3 L24 3 Z" fill="#8a6a34"/>
+        <path d="M-4 -2 L-16 -10 L-14 2 Z" fill="#7d1f2b"/>
+        <ellipse cx="0" cy="-4" rx="6" ry="7" fill="#7d1f2b"/>
+        <rect x="-4" y="-6" width="8" height="3" fill="#c8a03a"/>
+        <circle cx="2" cy="-13" r="4.2" fill="#3a2418"/>
+      </g>
+    </g>
+    <g class="flyer3" opacity="0.7">
+      <g transform="translate(258,150) scale(0.9)">
+        <line x1="-14" y1="6" x2="16" y2="0" stroke="#6b4a24" stroke-width="2.4"/>
+        <path d="M16 0 L24 -3 L24 3 Z" fill="#8a6a34"/>
+        <path d="M-4 -2 L-16 -10 L-14 2 Z" fill="#7d1f2b"/>
+        <ellipse cx="0" cy="-4" rx="6" ry="7" fill="#7d1f2b"/>
+        <rect x="-4" y="-6" width="8" height="3" fill="#c8a03a"/>
+        <circle cx="2" cy="-13" r="4.2" fill="#4a3020"/>
+      </g>
+    </g>
+
+    <!-- Slytherin (green and silver), flying the other way -->
+    <g class="flyer2" opacity="0.8">
+      <g transform="translate(320,214) scale(-1.1,1.1)">
+        <line x1="-14" y1="6" x2="16" y2="0" stroke="#6b4a24" stroke-width="2.4"/>
+        <path d="M16 0 L24 -3 L24 3 Z" fill="#8a6a34"/>
+        <path d="M-4 -2 L-16 -10 L-14 2 Z" fill="#15452f"/>
+        <ellipse cx="0" cy="-4" rx="6" ry="7" fill="#15452f"/>
+        <rect x="-4" y="-6" width="8" height="3" fill="#aab4bf"/>
+        <circle cx="2" cy="-13" r="4.2" fill="#3a2418"/>
+      </g>
+    </g>
+    <g class="flyer4" opacity="0.65">
+      <g transform="translate(150,128) scale(-0.85,0.85)">
+        <line x1="-14" y1="6" x2="16" y2="0" stroke="#6b4a24" stroke-width="2.4"/>
+        <path d="M16 0 L24 -3 L24 3 Z" fill="#8a6a34"/>
+        <path d="M-4 -2 L-16 -10 L-14 2 Z" fill="#15452f"/>
+        <ellipse cx="0" cy="-4" rx="6" ry="7" fill="#15452f"/>
+        <rect x="-4" y="-6" width="8" height="3" fill="#aab4bf"/>
+        <circle cx="2" cy="-13" r="4.2" fill="#4a3020"/>
+      </g>
+    </g>
+  </svg>
+  </div>
+
   <div id="player" class="thing">🧹</div>
   <div id="levelUp"></div>
 
@@ -304,32 +509,38 @@ const CHANCE_JACKPOT = 10;     // a big pile of coins
 // ---- The drawings ----
 // These are SVG pictures: little shapes described with numbers.
 // A Golden Snitch is a gold ball with two silver wings that flap.
+// Every drawing needs its OWN gradient names. If two pictures on the page
+// share a name, the browser gets confused about which one to use.
+let drawingCount = 0;
+
 function snitchSVG(size) {
+  const n = ++drawingCount;
+  const gold = "gold" + n, silver = "silver" + n;
   return '<svg width="' + size + '" height="' + (size * 0.72) + '" viewBox="0 0 42 30">' +
     '<defs>' +
-      '<radialGradient id="gold" cx="35%" cy="30%">' +
+      '<radialGradient id="' + gold + '" cx="35%" cy="30%">' +
         '<stop offset="0%" stop-color="#fff6cf"/>' +
         '<stop offset="55%" stop-color="#ffd247"/>' +
         '<stop offset="100%" stop-color="#b8860b"/>' +
       '</radialGradient>' +
-      '<linearGradient id="silver" x1="0" y1="0" x2="0" y2="1">' +
+      '<linearGradient id="' + silver + '" x1="0" y1="0" x2="0" y2="1">' +
         '<stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>' +
         '<stop offset="100%" stop-color="#c8d4e8" stop-opacity="0.55"/>' +
       '</linearGradient>' +
     '</defs>' +
     // left wing, then right wing (they flap up and down)
     '<g class="wing wingLeft">' +
-      '<path d="M14 17 C9 6, 3 3, 1 7 C-0.5 12, 6 17, 14 18 Z" fill="url(#silver)" stroke="#e6eefb" stroke-width="0.5"/>' +
+      '<path d="M14 17 C9 6, 3 3, 1 7 C-0.5 12, 6 17, 14 18 Z" fill="url(#' + silver + ')" stroke="#e6eefb" stroke-width="0.5"/>' +
       '<path d="M13 17 C9 12, 6 9, 3 7" fill="none" stroke="#b9c7de" stroke-width="0.4" opacity="0.8"/>' +
       '<path d="M13 17.6 C10 14, 7 12, 4 10.5" fill="none" stroke="#b9c7de" stroke-width="0.35" opacity="0.6"/>' +
     '</g>' +
     '<g class="wing wingRight">' +
-      '<path d="M28 17 C33 6, 39 3, 41 7 C42.5 12, 36 17, 28 18 Z" fill="url(#silver)" stroke="#e6eefb" stroke-width="0.5"/>' +
+      '<path d="M28 17 C33 6, 39 3, 41 7 C42.5 12, 36 17, 28 18 Z" fill="url(#' + silver + ')" stroke="#e6eefb" stroke-width="0.5"/>' +
       '<path d="M29 17 C33 12, 36 9, 39 7" fill="none" stroke="#b9c7de" stroke-width="0.4" opacity="0.8"/>' +
       '<path d="M29 17.6 C32 14, 35 12, 38 10.5" fill="none" stroke="#b9c7de" stroke-width="0.35" opacity="0.6"/>' +
     '</g>' +
     // the golden ball, with a shiny spot and a band around it
-    '<circle cx="21" cy="19" r="8.5" fill="url(#gold)" stroke="#8a6508" stroke-width="0.7"/>' +
+    '<circle cx="21" cy="19" r="8.5" fill="url(#' + gold + ')" stroke="#8a6508" stroke-width="0.7"/>' +
     '<path d="M12.8 17 Q21 22.5, 29.2 17" fill="none" stroke="#8a6508" stroke-width="0.8" opacity="0.75"/>' +
     '<circle cx="17.8" cy="15.8" r="2.2" fill="#fffbe8" opacity="0.9"/>' +
   '</svg>';
@@ -337,15 +548,17 @@ function snitchSVG(size) {
 
 // A Bludger is a heavy black iron ball with rivets.
 function bludgerSVG(size) {
+  const n = ++drawingCount;
+  const iron = "iron" + n;
   return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 30 30">' +
     '<defs>' +
-      '<radialGradient id="iron" cx="35%" cy="30%">' +
+      '<radialGradient id="' + iron + '" cx="35%" cy="30%">' +
         '<stop offset="0%" stop-color="#7d8590"/>' +
         '<stop offset="60%" stop-color="#3a3f47"/>' +
         '<stop offset="100%" stop-color="#14161a"/>' +
       '</radialGradient>' +
     '</defs>' +
-    '<circle cx="15" cy="15" r="13" fill="url(#iron)" stroke="#0a0b0d" stroke-width="1"/>' +
+    '<circle cx="15" cy="15" r="13" fill="url(#' + iron + ')" stroke="#0a0b0d" stroke-width="1"/>' +
     '<circle cx="10" cy="9" r="1.5" fill="#9aa3ad" opacity="0.8"/>' +
     '<circle cx="21" cy="12" r="1.2" fill="#6b737d" opacity="0.7"/>' +
     '<circle cx="16" cy="21" r="1.3" fill="#6b737d" opacity="0.7"/>' +
@@ -790,6 +1003,37 @@ resetBtn.addEventListener("click", () => {
   updateScoreboard();
   updateBroom();
 });
+
+// ---- Fill the far stand with a cheering crowd ----
+// Instead of typing out 70 little people, we use a loop to make them.
+let crowdHTML = "";
+for (let i = 0; i < 35; i++) {
+  const x = 4 + i * 12;
+  const speed = "ABC"[i % 3];           // three different bobbing speeds
+  crowdHTML += '<g class="cheer' + speed + '">' +
+    '<circle cx="' + x + '" cy="305" r="3.4" fill="#0d0820" opacity="0.9"/>' +
+    '<circle cx="' + (x + 6) + '" cy="296" r="3" fill="#150e2e" opacity="0.85"/>' +
+  '</g>';
+
+  // every 6th fan waves a house banner, red for Gryffindor, green for Slytherin
+  if (i % 6 === 2) {
+    const gryffindor = (i % 12 === 2);
+    const colour = gryffindor ? "#7d1f2b" : "#15452f";
+    const trim = gryffindor ? "#c8a03a" : "#aab4bf";
+    crowdHTML += '<g class="wave" style="transform-origin:' + x + 'px 300px">' +
+      '<rect x="' + (x - 0.5) + '" y="288" width="1.2" height="13" fill="#5a4a2a"/>' +
+      '<path d="M' + x + ' 288 L' + (x + 9) + ' 291 L' + x + ' 294 Z" fill="' + colour + '"/>' +
+      '<path d="M' + x + ' 290 L' + (x + 5) + ' 291.5 L' + x + ' 293 Z" fill="' + trim + '" opacity="0.9"/>' +
+    '</g>';
+  }
+
+  // and a few twinkling wand lights
+  if (i % 5 === 1) {
+    crowdHTML += '<circle class="spark" cx="' + (x + 3) + '" cy="' + (292 + (i % 3) * 5) +
+                 '" r="1.6" fill="#ffe9a8" style="animation-delay:' + ((i % 7) * 0.3).toFixed(1) + 's"/>';
+  }
+}
+document.getElementById("crowd").innerHTML = crowdHTML;
 
 // Put a real little Snitch and Bludger on the start screen
 document.getElementById("legend").innerHTML =

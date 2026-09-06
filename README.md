@@ -9,6 +9,17 @@ The Snitches are proper little golden balls with silver wings that flap,
 and they weave from side to side as they fly, so they are tricky to catch.
 Bludgers are heavy iron balls, so they just spin and drop straight down.
 
+## The stadium 🏟️
+
+The game is played over a Quidditch pitch at Hogwarts at night: the castle
+on the hill with lit windows, a moon, three golden goal hoops, spectator
+towers flying the Gryffindor and Slytherin flags, and players from both
+houses drifting about on their brooms.
+
+The far stand is full of fans who bob up and down cheering, wave house
+banners and twinkle their wands. They are built with a loop in the code,
+because typing out seventy little people would take forever.
+
 ## How to play
 
 - Move with the **←** and **→** arrow keys
