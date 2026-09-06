@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catch the Golden Snitch</title>
+<style>
+  body {
+    margin: 0;
+    background: #1a1033;
+    color: #f5e6c8;
+    font-family: Georgia, serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    user-select: none;
+  }
+
+  h1 {
+    margin: 16px 0 4px;
+    font-size: 28px;
+    color: #ffd86b;
+  }
+
+  #scoreboard {
+    font-size: 20px;
+    margin-bottom: 8px;
+  }
+
+  /* The game area. Everything flies around inside this box. */
+  #game {
+    position: relative;
+    width: 420px;
+    height: 520px;
+    max-width: 95vw;
+    background: linear-gradient(#2b1b5a, #4a2c7a);
+    border: 4px solid #ffd86b;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .thing {
+    position: absolute;
+    font-size: 34px;
+    line-height: 1;
+  }
+
+  #player {
+    bottom: 8px;
+    font-size: 40px;
+  }
+
+  #message {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(26, 16, 51, 0.85);
+    text-align: center;
+    padding: 20px;
+  }
+
+  #message h2 { color: #ffd86b; margin: 0 0 10px; }
+
+  button {
+    font-family: Georgia, serif;
+    font-size: 18px;
+    padding: 10px 22px;
+    margin-top: 12px;
+    background: #ffd86b;
+    color: #2b1b5a;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  #help { margin: 12px; font-size: 14px; opacity: 0.8; }
+</style>
+</head>
+<body>
+
+<h1>⚡ Catch the Golden Snitch</h1>
+<div id="scoreboard">Score: <span id="score">0</span> &nbsp; Lives: <span id="lives">❤️❤️❤️</span></div>
+
+<div id="game">
+  <div id="player" class="thing">🧹</div>
+  <div id="message">
+    <h2>Ready, Seeker?</h2>
+    <p>Catch the Snitches 🟡<br>Dodge the Bludgers ⚫</p>
+    <button id="startBtn">Start Game</button>
+  </div>
+</div>
+
+<p id="help">Move with the ← → arrow keys, or drag your finger on the screen.</p>
+
+<script>
+// ---- Things you can change to make the game your own! ----
+const FALL_SPEED = 2.5;      // how fast things fall
+const SPAWN_EVERY = 55;      // frames between new things (smaller = harder)
+const BLUDGER_CHANCE = 0.3;  // 0.3 means 30% of things are Bludgers
+// ----------------------------------------------------------
+
+const game = document.getElementById("game");
+const player = document.getElementById("player");
+const scoreEl = document.getElementById("score");
+const livesEl = document.getElementById("lives");
+const message = document.getElementById("message");
+const startBtn = document.getElementById("startBtn");
+
+let playerX = 190;
+let score = 0;
+let lives = 3;
+let fallingThings = [];
+let playing = false;
+let framesUntilSpawn = 0;
+
+function startGame() {
+  score = 0;
+  lives = 3;
+  playerX = game.clientWidth / 2 - 20;
+  fallingThings.forEach(t => t.el.remove());
+  fallingThings = [];
+  playing = true;
+  framesUntilSpawn = 0;
+  message.style.display = "none";
+  updateScoreboard();
+  requestAnimationFrame(gameLoop);
+}
+
+function updateScoreboard() {
+  scoreEl.textContent = score;
+  livesEl.textContent = "❤️".repeat(lives) || "💀";
+}
+
+// Make a new Snitch or Bludger at a random spot along the top.
+function spawnThing() {
+  const isBludger = Math.random() < BLUDGER_CHANCE;
+  const el = document.createElement("div");
+  el.className = "thing";
+  el.textContent = isBludger ? "⚫" : "🟡";
+  el.style.left = Math.random() * (game.clientWidth - 40) + "px";
+  el.style.top = "-40px";
+  game.appendChild(el);
+  fallingThings.push({ el, y: -40, isBludger });
+}
+
+function gameLoop() {
+  if (!playing) return;
+
+  player.style.left = playerX + "px";
+
+  framesUntilSpawn--;
+  if (framesUntilSpawn <= 0) {
+    spawnThing();
+    framesUntilSpawn = SPAWN_EVERY;
+  }
+
+  for (let i = fallingThings.length - 1; i >= 0; i--) {
+    const thing = fallingThings[i];
+    thing.y += FALL_SPEED;
+    thing.el.style.top = thing.y + "px";
+
+    const thingX = parseFloat(thing.el.style.left);
+    const hitPlayer = thing.y > game.clientHeight - 60 &&
+                      thing.y < game.clientHeight - 5 &&
+                      thingX > playerX - 35 &&
+                      thingX < playerX + 40;
+
+    if (hitPlayer) {
+      if (thing.isBludger) {
+        lives--;
+        if (lives <= 0) return endGame();
+      } else {
+        score++;
+      }
+      updateScoreboard();
+      thing.el.remove();
+      fallingThings.splice(i, 1);
+    } else if (thing.y > game.clientHeight) {
+      thing.el.remove();
+      fallingThings.splice(i, 1);
+    }
+  }
+
+  requestAnimationFrame(gameLoop);
+}
+
+function endGame() {
+  playing = false;
+  updateScoreboard();
+  message.querySelector("h2").textContent = "Game Over!";
+  message.querySelector("p").innerHTML = "You caught <b>" + score + "</b> Snitches.";
+  startBtn.textContent = "Play Again";
+  message.style.display = "flex";
+}
+
+// Keyboard controls
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowLeft") playerX = Math.max(0, playerX - 30);
+  if (e.key === "ArrowRight") playerX = Math.min(game.clientWidth - 40, playerX + 30);
+});
+
+// Touch / mouse controls
+function moveToPointer(x) {
+  const box = game.getBoundingClientRect();
+  playerX = Math.min(Math.max(0, x - box.left - 20), game.clientWidth - 40);
+}
+game.addEventListener("mousemove", (e) => { if (playing) moveToPointer(e.clientX); });
+game.addEventListener("touchmove", (e) => {
+  if (playing) { moveToPointer(e.touches[0].clientX); e.preventDefault(); }
+}, { passive: false });
+
+startBtn.addEventListener("click", startGame);
+</script>
+
+</body>
+</html>
